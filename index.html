@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS CORE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10473/10473458.png">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .neon-glow { text-shadow: 0 0 15px #a78bfa, 0 0 30px #c026d3; }
+    .mode-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .mode-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 0 30px -5px #c026d3; }
+    .chat-scroll::-webkit-scrollbar { display: none; }
+    .glass { background: rgba(17, 17, 27, 0.85); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body class="bg-[#0A0A0F] text-white min-h-screen pb-12">
+  <div class="max-w-7xl mx-auto">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between px-6 py-5 border-b border-violet-900/70 bg-[#0A0A0F]/80 sticky top-0 z-50">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-400 rounded-3xl flex items-center justify-center text-4xl shadow-[0_0_25px_-5px_#c026d3] neon-glow">🌌</div>
+        <div>
+          <h1 class="text-4xl font-bold tracking-[-2px] neon-glow">NEXUS CORE</h1>
+          <p class="text-violet-400 text-sm -mt-1">12 specialist-breinen • Eén AI</p>
+        </div>
+      </div>
+      <button onclick="openSettings()" class="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl font-medium flex items-center gap-2 hover:scale-105 transition">
+        ⚙️ API Key
+      </button>
+    </div>
+
+    <!-- MODES GRID -->
+    <div class="p-6">
+      <h2 class="text-2xl font-semibold mb-5 text-violet-300">Kies je Core</h2>
+      <div id="modes-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div id="chat-area" class="hidden mx-4 md:mx-6 mb-6 glass rounded-3xl shadow-2xl border border-violet-900/70 overflow-hidden">
+      <div id="chat-header" class="px-6 py-5 border-b border-violet-900 flex items-center gap-4"></div>
+      <div id="messages" class="chat-scroll h-[420px] px-6 py-6 overflow-y-auto bg-[#0f0f1a]/90 space-y-6"></div>
+      
+      <div class="p-5 border-t border-violet-900 bg-[#11111b]">
+        <form id="chat-form" class="flex gap-3">
+          <input id="user-input" type="text" placeholder="Stel je vraag aan deze specialist..." 
+                 class="flex-1 bg-[#1f1f2e] border border-violet-700 focus:border-fuchsia-400 rounded-3xl px-6 py-5 outline-none text-white placeholder:text-gray-400 text-base">
+          <button type="submit" class="bg-gradient-to-r from-violet-600 to-fuchsia-500 w-14 h-14 rounded-3xl flex items-center justify-center text-2xl hover:scale-110 transition">→</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- WELCOME -->
+    <div id="welcome" class="mx-4 md:mx-6 mb-6 glass rounded-3xl p-10 text-center border border-violet-900/70">
+      <div class="text-8xl mb-6 animate-pulse">🌌</div>
+      <h2 class="text-4xl font-bold mb-2 neon-glow">Welkom bij NEXUS CORE</h2>
+      <p class="text-xl text-gray-400">Kies een core. Praat met een echte expert.<br>Professioneel. Snel. Zero bullshit.</p>
+      <div onclick="showDemoNotice()" class="mt-8 inline-flex items-center gap-2 text-violet-400 hover:text-fuchsia-400 cursor-pointer text-lg">▶ Probeer eerst de demo (geen key nodig)</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settings-modal" onclick="if(event.target===this)closeSettings()" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[9999]">
+    <div onclick="event.stopImmediatePropagation()" class="glass rounded-3xl p-8 max-w-md w-full mx-4 border border-violet-400/30">
+      <h3 class="text-3xl font-bold mb-6">Anthropic API Key</h3>
+      <input id="api-key-input" type="password" placeholder="sk-ant-..." class="w-full bg-[#1f1f2e] border border-violet-700 rounded-3xl px-6 py-6 text-lg outline-none mb-6">
+      <p class="text-xs text-gray-400 mb-8">Sleutel blijft alleen op jouw telefoon. Haal gratis key bij anthropic.com</p>
+      <div class="flex gap-4">
+        <button onclick="saveApiKey()" class="flex-1 py-5 bg-gradient-to-r from-violet-600 to-fuchsia-500 rounded-3xl font-semibold text-lg">Opslaan &amp; Activeren</button>
+        <button onclick="closeSettings()" class="flex-1 py-5 bg-gray-800 hover:bg-gray-700 rounded-3xl font-semibold">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    tailwind.config = { content: [] }
+    const modes = [
+      { id: 'scholar', emoji: '🎓', name: 'SCHOLAR', desc: 'Huiswerk, uitleg, toetsen', system: 'Je bent Scholar, topdocent. Leg helder uit, samenvattingen, huiswerk. Altijd Nederlands.' },
+      { id: 'craftcore', emoji: '⛏️', name: 'CRAFTCORE', desc: 'Minecraft servers & plugins', system: 'Je bent CraftCore, Minecraft-expert. Servers, Skript, plugins. Nederlands.' },
+      { id: 'unreal', emoji: '🎮', name: 'UNREAL', desc: 'UE5 Blueprints & C++', system: 'Je bent Unreal, senior UE5 developer. Blueprints, C++, levels. Nederlands.' },
+      { id: 'devcore', emoji: '💻', name: 'DEVCORE', desc: 'Programmeren, web, apps', system: 'Je bent DevCore, full-stack expert. Code, debug, best practices. Nederlands.' },
+      { id: 'beatlab', emoji: '🎵', name: 'BEATLAB', desc: 'Beats & muziek produceren', system: 'Je bent BeatLab, pro music producer. Beats, mixing, DAW. Nederlands.' },
+      { id: 'appforge', emoji: '📱', name: 'APPFORGE', desc: 'App & web development', system: 'Je bent AppForge, mobiele/web expert. React, Flutter, backend. Nederlands.' },
+      { id: 'designlab', emoji: '🎨', name: 'DESIGNLAB', desc: 'Design & branding', system: 'Je bent DesignLab, senior designer. UI/UX, Figma, branding. Nederlands.' },
+      { id: 'inkforge', emoji: '📖', name: 'INKFORGE', desc: 'Boeken & verhalen schrijven', system: 'Je bent InkForge, pro schrijver. Plot, dialogen, wereldbouw. Nederlands.' },
+      { id: 'voidmind', emoji: '🌌', name: 'VOIDMIND', desc: 'Creatieve ideeën & branding', system: 'Je bent VoidMind, ultieme creatieve denker. Out-of-the-box. Nederlands.' },
+      // === NIEUWE EXTRA MODES ===
+      { id: 'stratcore', emoji: '📊', name: 'STRATCORE', desc: 'Business, marketing, strategie', system: 'Je bent StratCore, business & marketing expert. Strategie, campagnes, growth. Altijd Nederlands.' },
+      { id: 'scientia', emoji: '🔬', name: 'SCIENTIA', desc: 'Wetenschap & research', system: 'Je bent Scientia, wetenschapper. Research, experimenten, uitleg. Nederlands.' },
+      { id: 'vibecore', emoji: '🎤', name: 'VIBECORE', desc: 'Content creator, social & video', system: 'Je bent VibeCore, content creator expert. Social media, YouTube, TikTok, scripts. Nederlands.' }
+    ]
+
+    let apiKey = localStorage.getItem('anthropicKey') || ''
+    let currentMode = null
+    let histories = {}
+
+    function renderModes() {
+      const grid = document.getElementById('modes-grid')
+      grid.innerHTML = modes.map(mode => `
+        <div onclick="selectMode('${mode.id}')" class="mode-card bg-[#11111b] border border-violet-900/70 hover:border-fuchsia-400 rounded-3xl p-5 cursor-pointer">
+          <div class="text-6xl mb-4">${mode.emoji}</div>
+          <h3 class="font-bold text-xl">${mode.name}</h3>
+          <p class="text-sm text-gray-400 mt-1">${mode.desc}</p>
+        </div>
+      `).join('')
+    }
+
+    function selectMode(id) {
+      currentMode = modes.find(m => m.id === id)
+      if (!histories[id]) histories[id] = []
+      document.getElementById('welcome').classList.add('hidden')
+      document.getElementById('chat-area').classList.remove('hidden')
+      renderChatHeader()
+      renderMessages()
+    }
+
+    function renderChatHeader() {
+      document.getElementById('chat-header').innerHTML = `
+        <div class="text-5xl">${currentMode.emoji}</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-2xl">${currentMode.name}</h3>
+          <p class="text-violet-400">${currentMode.desc}</p>
+        </div>
+        <button onclick="clearChat()" class="text-gray-400 hover:text-red-400 px-5 py-2 text-sm font-medium">Wissen</button>
+      `
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messages')
+      container.innerHTML = histories[currentMode.id].map(msg => `
+        <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+          <div class="${msg.role === 'user' ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 max-w-[80%]' : 'bg-[#1f1f2e] max-w-[80%]'} rounded-3xl px-6 py-4">
+            ${msg.role === 'assistant' ? `<span class="text-3xl mr-3">${currentMode.emoji}</span>` : ''}
+            <span class="text-base leading-relaxed">${msg.content}</span>
+          </div>
+        </div>
+      `).join('')
+      container.scrollTop = container.scrollHeight
+    }
+
+    async function sendMessage(e) {
+      e.preventDefault()
+      const input = document.getElementById('user-input')
+      const text = input.value.trim()
+      if (!text || !currentMode) return
+
+      histories[currentMode.id].push({ role: 'user', content: text })
+      renderMessages()
+      input.value = ''
+
+      const messagesDiv = document.getElementById('messages')
+      const loading = document.createElement('div')
+      loading.className = 'flex justify-start'
+      loading.innerHTML = `<div class="bg-[#1f1f2e] rounded-3xl px-6 py-4 flex items-center gap-3"><span class="animate-pulse">NEXUS denkt...</span></div>`
+      messagesDiv.appendChild(loading)
+      messagesDiv.scrollTop = messagesDiv.scrollHeight
+
+      let responseText = ''
+      if (!apiKey) {
+        await new Promise(r => setTimeout(r, 1400))
+        responseText = `🔥 Demo van ${currentMode.name}:\n\nTop vraag! Hier is een sterk antwoord in de stijl van deze core. Voeg je echte Anthropic key toe voor volledige Claude-kracht. Wat wil je precies?`
+      } else {
+        try {
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 1200, temperature: 0.85, system: currentMode.system, messages: histories[currentMode.id].map(m => ({role: m.role, content: m.content})) })
+          })
+          const data = await res.json()
+          responseText = data.content?.[0]?.text || 'Geen antwoord.'
+        } catch (err) {
+          responseText = '❌ API-fout. Check je key of verbinding.'
+        }
+      }
+      loading.remove()
+      histories[currentMode.id].push({ role: 'assistant', content: responseText })
+      renderMessages()
+    }
+
+    function clearChat() { if (currentMode) { histories[currentMode.id] = []; renderMessages() } }
+    function openSettings() { document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('api-key-input').value = apiKey }
+    function closeSettings() { document.getElementById('settings-modal').classList.add('hidden') }
+    function saveApiKey() {
+      apiKey = document.getElementById('api-key-input').value.trim()
+      localStorage.setItem('anthropicKey', apiKey)
+      closeSettings()
+      alert('✅ Key opgeslagen! Nu echte AI-power.')
+    }
+    function showDemoNotice() { alert('👉 Kies een core boven. Demo werkt meteen. Key = full power!') }
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'))
+    }
+
+    window.onload = () => {
+      renderModes()
+      document.getElementById('chat-form').addEventListener('submit', sendMessage)
+    }
+  </script>
+</body>
+</html>
